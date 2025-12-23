@@ -1,11 +1,12 @@
-import { MapPin, Clock, Phone, CheckCircle } from 'lucide-react';
+import { MapPin, Clock, Phone, CheckCircle, Navigation } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import type { EWasteBin } from '@/data/eWasteBins';
+import { formatDistance } from '@/hooks/useGeolocation';
 
 interface BinCardProps {
-  bin: EWasteBin;
+  bin: EWasteBin & { distance?: number };
   onViewOnMap?: () => void;
 }
 
@@ -23,13 +24,21 @@ const BinCard = ({ bin, onViewOnMap }: BinCardProps) => {
               {bin.area}, {bin.city}
             </p>
           </div>
-          <Badge 
-            variant="outline" 
-            className="bg-eco-light text-eco-dark border-eco shrink-0"
-          >
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Active
-          </Badge>
+          <div className="flex flex-col items-end gap-1 shrink-0">
+            {bin.distance !== undefined && (
+              <Badge className="bg-primary/10 text-primary border-primary/20">
+                <Navigation className="w-3 h-3 mr-1" />
+                {formatDistance(bin.distance)}
+              </Badge>
+            )}
+            <Badge 
+              variant="outline" 
+              className="bg-eco-light text-eco-dark border-eco"
+            >
+              <CheckCircle className="w-3 h-3 mr-1" />
+              Active
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">

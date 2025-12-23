@@ -1,13 +1,18 @@
 import { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, List, Grid, ArrowLeft } from 'lucide-react';
+import { MapPin, Grid, ArrowLeft, Navigation, Loader2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import Layout from '@/components/Layout';
 import EWasteMap from '@/components/EWasteMap';
 import BinCard from '@/components/BinCard';
 import SearchFilter from '@/components/SearchFilter';
-import { eWasteBins, eWasteCategories } from '@/data/eWasteBins';
+import { eWasteBins, eWasteCategories, type EWasteBin } from '@/data/eWasteBins';
+import { useGeolocation, calculateDistance, formatDistance } from '@/hooks/useGeolocation';
+
+export interface BinWithDistance extends EWasteBin {
+  distance?: number;
+}
 
 const MapPage = () => {
   const [searchQuery, setSearchQuery] = useState('');
@@ -15,11 +20,21 @@ const MapPage = () => {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedBinId, setSelectedBinId] = useState<string | undefined>();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
+  const [sortByDistance, setSortByDistance] = useState(false);
+  
+  const { latitude, longitude, error: geoError, loading: geoLoading, requestLocation, clearLocation } = useGeolocation();
 
-  // Filter bins based on search and filters
-  const filteredBins = useMemo(() => {
-    return eWasteBins.filter((bin) => {
-      // Search filter
+  // Filter and sort bins based on search, filters, and location
+  const filteredBins = useMemo((): BinWithDistance[] => {
+    let bins: BinWithDistance[] = eWasteBins.map((bin) => {
+      const distance = latitude && longitude 
+        ? calculateDistance(latitude, longitude, bin.lat, bin.lng)
+        : undefined;
+      return { ...bin, distance };
+    });
+
+    // Apply filters
+    bins = bins.filter((bin) => {
       const searchMatch = 
         searchQuery === '' ||
         bin.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -27,10 +42,8 @@ const MapPage = () => {
         bin.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
         bin.pincode.includes(searchQuery);
 
-      // City filter
       const cityMatch = selectedCity === 'all' || bin.city === selectedCity;
 
-      // Category filter
       const categoryMatch = 
         selectedCategory === 'all' ||
         selectedCategory === 'all-electronics' ||
@@ -43,7 +56,24 @@ const MapPage = () => {
 
       return searchMatch && cityMatch && categoryMatch;
     });
-  }, [searchQuery, selectedCity, selectedCategory]);
+
+    // Sort by distance if enabled
+    if (sortByDistance && latitude && longitude) {
+      bins.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+    }
+
+    return bins;
+  }, [searchQuery, selectedCity, selectedCategory, latitude, longitude, sortByDistance]);
+
+  const handleFindNearMe = () => {
+    requestLocation();
+    setSortByDistance(true);
+  };
+
+  const handleClearLocation = () => {
+    clearLocation();
+    setSortByDistance(false);
+  };
 
   // Calculate map center based on filtered results
   const mapCenter = useMemo<[number, number]>(() => {
@@ -87,8 +117,33 @@ const MapPage = () => {
             </p>
           </div>
 
-          {/* View Toggle */}
-          <div className="flex gap-2 ml-12 sm:ml-0">
+          {/* View Toggle & GPS Button */}
+          <div className="flex gap-2 ml-12 sm:ml-0 flex-wrap">
+            {latitude && longitude ? (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleClearLocation}
+                className="border-primary text-primary hover:bg-primary/10"
+              >
+                <X className="w-4 h-4 mr-2" />
+                Clear Location
+              </Button>
+            ) : (
+              <Button
+                size="sm"
+                onClick={handleFindNearMe}
+                disabled={geoLoading}
+                className="eco-gradient text-primary-foreground"
+              >
+                {geoLoading ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Navigation className="w-4 h-4 mr-2" />
+                )}
+                Find Near Me
+              </Button>
+            )}
             <Button
               variant={viewMode === 'map' ? 'default' : 'outline'}
               size="sm"
@@ -109,6 +164,21 @@ const MapPage = () => {
             </Button>
           </div>
         </div>
+
+        {/* Location Status/Error */}
+        {geoError && (
+          <Alert variant="destructive" className="mb-4">
+            <AlertDescription>{geoError}</AlertDescription>
+          </Alert>
+        )}
+        {latitude && longitude && (
+          <Alert className="mb-4 border-primary/30 bg-primary/5">
+            <Navigation className="w-4 h-4 text-primary" />
+            <AlertDescription className="text-foreground">
+              📍 Location detected! Showing {filteredBins.length} bins sorted by distance from you.
+            </AlertDescription>
+          </Alert>
+        )}
 
         {/* Search & Filters */}
         <div className="mb-6">
