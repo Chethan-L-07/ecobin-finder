@@ -218,24 +218,21 @@ const AddBinPage = () => {
             <CardContent>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
                 {eWasteCategories.map((category) => (
-                  <div
+                  <label
                     key={category.id}
+                    htmlFor={category.id}
                     className="flex items-center space-x-3 p-3 rounded-lg border border-border/50 hover:bg-secondary/50 transition-colors cursor-pointer"
-                    onClick={() => handleCategoryToggle(category.label)}
                   >
                     <Checkbox
                       id={category.id}
                       checked={formData.acceptedItems.includes(category.label)}
                       onCheckedChange={() => handleCategoryToggle(category.label)}
                     />
-                    <label
-                      htmlFor={category.id}
-                      className="text-sm font-medium cursor-pointer flex items-center gap-2"
-                    >
+                    <span className="text-sm font-medium flex items-center gap-2">
                       <span className="text-lg">{category.icon}</span>
                       {category.label}
-                    </label>
-                  </div>
+                    </span>
+                  </label>
                 ))}
               </div>
             </CardContent>
