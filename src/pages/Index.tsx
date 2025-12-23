@@ -51,7 +51,7 @@ const Index = () => {
               </div>
               
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight">
-                Find <span className="text-gradient">E-Waste Bins</span> Near You
+                Find <span className="text-primary">E-Waste Bins</span> Near You
               </h1>
               
               <p className="text-lg text-muted-foreground max-w-lg">
@@ -105,7 +105,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              Why Use <span className="text-gradient">E-Waste Locator</span>?
+              Why Use <span className="text-primary">E-Waste Locator</span>?
             </h2>
             <p className="text-muted-foreground">
               Our platform makes it easy to find and navigate to e-waste collection centers 
@@ -138,7 +138,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">
-              What Can You <span className="text-gradient">Recycle</span>?
+              What Can You <span className="text-primary">Recycle</span>?
             </h2>
             <p className="text-muted-foreground">
               E-waste bins accept various types of electronic devices and components. 
