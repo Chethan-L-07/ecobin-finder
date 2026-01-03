@@ -78,6 +78,8 @@ interface EWasteMapProps {
   className?: string;
   selectedBinId?: string;
   userLocation?: { latitude: number; longitude: number } | null;
+  centerOnUser?: boolean;
+  onCenterComplete?: () => void;
 }
 
 function EWasteMap({ 
@@ -86,7 +88,9 @@ function EWasteMap({
   zoom = 5,
   className = '',
   selectedBinId,
-  userLocation
+  userLocation,
+  centerOnUser,
+  onCenterComplete
 }: EWasteMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -212,6 +216,18 @@ function EWasteMap({
         `);
     }
   }, [userLocation]);
+
+  // Handle center on user request
+  useEffect(() => {
+    if (!mapInstanceRef.current || !centerOnUser || !userLocation) return;
+
+    mapInstanceRef.current.flyTo(
+      [userLocation.latitude, userLocation.longitude],
+      14,
+      { duration: 1 }
+    );
+    onCenterComplete?.();
+  }, [centerOnUser, userLocation, onCenterComplete]);
 
   return (
     <div className={`rounded-xl overflow-hidden shadow-eco-lg border border-border/50 ${className}`}>
