@@ -1,6 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Grid, ArrowLeft, Navigation, Loader2, X } from 'lucide-react';
+import { MapPin, Grid, ArrowLeft, Navigation, Loader2, X, Crosshair } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Layout from '@/components/Layout';
@@ -21,6 +21,7 @@ const MapPage = () => {
   const [selectedBinId, setSelectedBinId] = useState<string | undefined>();
   const [viewMode, setViewMode] = useState<'map' | 'list'>('map');
   const [sortByDistance, setSortByDistance] = useState(false);
+  const [centerOnUser, setCenterOnUser] = useState(false);
   
   const { latitude, longitude, error: geoError, loading: geoLoading, requestLocation, clearLocation } = useGeolocation();
 
@@ -75,6 +76,14 @@ const MapPage = () => {
     setSortByDistance(false);
   };
 
+  const handleCenterOnMe = useCallback(() => {
+    setCenterOnUser(true);
+  }, []);
+
+  const handleCenterComplete = useCallback(() => {
+    setCenterOnUser(false);
+  }, []);
+
   // Calculate map center based on filtered results
   const mapCenter = useMemo<[number, number]>(() => {
     if (selectedBinId) {
@@ -120,15 +129,26 @@ const MapPage = () => {
           {/* View Toggle & GPS Button */}
           <div className="flex gap-2 ml-12 sm:ml-0 flex-wrap">
             {latitude && longitude ? (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={handleClearLocation}
-                className="border-primary text-primary hover:bg-primary/10"
-              >
-                <X className="w-4 h-4 mr-2" />
-                Clear Location
-              </Button>
+              <>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleClearLocation}
+                  className="border-primary text-primary hover:bg-primary/10"
+                >
+                  <X className="w-4 h-4 mr-2" />
+                  Clear Location
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleCenterOnMe}
+                  className="border-blue-500 text-blue-500 hover:bg-blue-500/10"
+                >
+                  <Crosshair className="w-4 h-4 mr-2" />
+                  Center on Me
+                </Button>
+              </>
             ) : (
               <Button
                 size="sm"
@@ -204,6 +224,8 @@ const MapPage = () => {
                 className="h-[500px] lg:h-[600px]"
                 selectedBinId={selectedBinId}
                 userLocation={latitude && longitude ? { latitude, longitude } : null}
+                centerOnUser={centerOnUser}
+                onCenterComplete={handleCenterComplete}
               />
             </div>
 
