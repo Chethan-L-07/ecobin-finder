@@ -203,6 +203,7 @@ const MapPage = () => {
                 zoom={selectedBinId ? 14 : filteredBins.length === 1 ? 12 : 5}
                 className="h-[500px] lg:h-[600px]"
                 selectedBinId={selectedBinId}
+                userLocation={latitude && longitude ? { latitude, longitude } : null}
               />
             </div>
 
