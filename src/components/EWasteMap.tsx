@@ -40,12 +40,44 @@ const createCustomIcon = () => {
   });
 };
 
+// User location marker icon
+const createUserLocationIcon = () => {
+  return L.divIcon({
+    html: `
+      <div style="
+        width: 20px;
+        height: 20px;
+        background: #3b82f6;
+        border-radius: 50%;
+        border: 3px solid white;
+        box-shadow: 0 0 0 2px #3b82f6, 0 4px 12px rgba(59, 130, 246, 0.5);
+        position: relative;
+      ">
+        <div style="
+          position: absolute;
+          top: 50%;
+          left: 50%;
+          transform: translate(-50%, -50%);
+          width: 6px;
+          height: 6px;
+          background: white;
+          border-radius: 50%;
+        "></div>
+      </div>
+    `,
+    className: 'user-location-icon',
+    iconSize: [20, 20],
+    iconAnchor: [10, 10],
+  });
+};
+
 interface EWasteMapProps {
   bins: EWasteBin[];
   center?: [number, number];
   zoom?: number;
   className?: string;
   selectedBinId?: string;
+  userLocation?: { latitude: number; longitude: number } | null;
 }
 
 function EWasteMap({ 
@@ -53,11 +85,13 @@ function EWasteMap({
   center = [20.5937, 78.9629],
   zoom = 5,
   className = '',
-  selectedBinId
+  selectedBinId,
+  userLocation
 }: EWasteMapProps) {
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+  const userMarkerRef = useRef<L.Marker | null>(null);
 
   const openDirections = (lat: number, lng: number) => {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
@@ -152,6 +186,32 @@ function EWasteMap({
       mapInstanceRef.current.flyTo([selectedBin.lat, selectedBin.lng], 14, { duration: 1.5 });
     }
   }, [selectedBinId, bins]);
+
+  // Handle user location marker
+  useEffect(() => {
+    if (!mapInstanceRef.current) return;
+
+    // Remove existing user marker
+    if (userMarkerRef.current) {
+      userMarkerRef.current.remove();
+      userMarkerRef.current = null;
+    }
+
+    // Add new user marker if location exists
+    if (userLocation) {
+      const userIcon = createUserLocationIcon();
+      userMarkerRef.current = L.marker(
+        [userLocation.latitude, userLocation.longitude],
+        { icon: userIcon, zIndexOffset: 1000 }
+      )
+        .addTo(mapInstanceRef.current)
+        .bindPopup(`
+          <div style="padding: 8px; text-align: center;">
+            <strong style="color: #3b82f6;">📍 Your Location</strong>
+          </div>
+        `);
+    }
+  }, [userLocation]);
 
   return (
     <div className={`rounded-xl overflow-hidden shadow-eco-lg border border-border/50 ${className}`}>
