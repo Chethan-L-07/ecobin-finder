@@ -96,6 +96,7 @@ function EWasteMap({
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
   const userMarkerRef = useRef<L.Marker | null>(null);
+  const userCirclesRef = useRef<L.Circle[]>([]);
 
   const openDirections = (lat: number, lng: number) => {
     window.open(`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`, '_blank');
@@ -191,27 +192,62 @@ function EWasteMap({
     }
   }, [selectedBinId, bins]);
 
-  // Handle user location marker
+  // Handle user location marker and radius circles
   useEffect(() => {
     if (!mapInstanceRef.current) return;
 
-    // Remove existing user marker
+    // Remove existing user marker and circles
     if (userMarkerRef.current) {
       userMarkerRef.current.remove();
       userMarkerRef.current = null;
     }
+    userCirclesRef.current.forEach(circle => circle.remove());
+    userCirclesRef.current = [];
 
-    // Add new user marker if location exists
+    // Add new user marker and circles if location exists
     if (userLocation) {
+      const map = mapInstanceRef.current;
       const userIcon = createUserLocationIcon();
+      
+      // Add radius circles (walking ~1km, driving ~5km)
+      const walkingCircle = L.circle(
+        [userLocation.latitude, userLocation.longitude],
+        {
+          radius: 1000, // 1km in meters
+          color: '#3b82f6',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.08,
+          weight: 2,
+          dashArray: '5, 5',
+        }
+      ).addTo(map).bindTooltip('~15 min walk', { permanent: false, direction: 'top' });
+
+      const drivingCircle = L.circle(
+        [userLocation.latitude, userLocation.longitude],
+        {
+          radius: 5000, // 5km in meters
+          color: '#8b5cf6',
+          fillColor: '#8b5cf6',
+          fillOpacity: 0.04,
+          weight: 2,
+          dashArray: '10, 6',
+        }
+      ).addTo(map).bindTooltip('~10 min drive', { permanent: false, direction: 'top' });
+
+      userCirclesRef.current = [walkingCircle, drivingCircle];
+
+      // Add user marker on top
       userMarkerRef.current = L.marker(
         [userLocation.latitude, userLocation.longitude],
         { icon: userIcon, zIndexOffset: 1000 }
       )
-        .addTo(mapInstanceRef.current)
+        .addTo(map)
         .bindPopup(`
           <div style="padding: 8px; text-align: center;">
             <strong style="color: #3b82f6;">📍 Your Location</strong>
+            <p style="font-size: 11px; color: #666; margin: 4px 0 0 0;">
+              Blue: ~1km walking<br/>Purple: ~5km driving
+            </p>
           </div>
         `);
     }
